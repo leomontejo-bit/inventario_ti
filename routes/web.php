@@ -13,11 +13,12 @@ use App\Http\Controllers\Web\EtiquetaWebController;
 use App\Http\Controllers\Web\HotelWebController;
 use App\Http\Controllers\Web\TipoActivoWebController;
 use App\Http\Controllers\Web\LicenciaWebController;
+use App\Http\Controllers\Web\UsuarioSistemaWebController;
 use Illuminate\Support\Facades\Route;
 
 // ===== Autenticación (público) =====
 Route::get('login', [AuthController::class, 'showLogin'])->name('login');
-Route::post('login', [AuthController::class, 'login']);
+Route::post('login', [AuthController::class, 'login'])->middleware('throttle:10,1');
 Route::post('logout', [AuthController::class, 'logout'])->name('logout');
 
 // ===== Rutas protegidas (requieren sesión iniciada) =====
@@ -35,6 +36,13 @@ Route::get('activos/{activo}/etiqueta', [EtiquetaWebController::class, 'imprimir
 
 // Auditoría / trazabilidad
 Route::get('auditoria', [AuditoriaWebController::class, 'index'])->name('auditoria.index');
+
+// Usuarios del sistema
+Route::patch('usuarios/{usuario}/toggle', [UsuarioSistemaWebController::class, 'toggle'])->name('usuarios.toggle');
+Route::post('usuarios/{usuario}/reset-password', [UsuarioSistemaWebController::class, 'resetPassword'])->middleware('throttle:10,1')->name('usuarios.reset-password');
+Route::resource('usuarios', UsuarioSistemaWebController::class)
+    ->parameters(['usuarios' => 'usuario'])
+    ->except('show', 'destroy');
 
 // Escaneo con pistola lectora de código de barras
 Route::get('escaneo', [EscaneoWebController::class, 'index'])->name('escaneo.index');

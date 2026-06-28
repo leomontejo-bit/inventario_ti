@@ -5,16 +5,23 @@ namespace Tests\Feature;
 use App\Models\Activo;
 use App\Models\Colaborador;
 use App\Models\UsuarioSistema;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
 class InventarioWebTest extends TestCase
 {
+    use RefreshDatabase;
+
+    protected bool $seed = true;
+
     protected function setUp(): void
     {
         parent::setUp();
 
         // Todas las rutas están protegidas: iniciamos sesión como administrador.
-        $admin = UsuarioSistema::query()->orderByRaw("FIELD(rol, 'admin') DESC")->first();
+        $admin = UsuarioSistema::query()
+            ->orderByRaw("CASE WHEN rol = 'admin' THEN 0 ELSE 1 END")
+            ->first();
         if ($admin) {
             $this->actingAs($admin);
         }

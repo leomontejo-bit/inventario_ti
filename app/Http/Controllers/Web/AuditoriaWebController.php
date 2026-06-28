@@ -18,8 +18,11 @@ class AuditoriaWebController extends Controller
             ->when($filtros['accion'] ?? null, fn ($q, $v) => $q->where('accion', $v))
             ->when($filtros['tabla'] ?? null, fn ($q, $v) => $q->where('tabla_afectada', $v))
             ->when($filtros['buscar'] ?? null, function ($q, $v) {
-                $q->whereHas('activo', fn ($a) => $a->where('num_inventario', 'like', "%{$v}%"))
-                    ->orWhere('ip_cliente', 'like', "%{$v}%");
+                $q->where(function ($subquery) use ($v) {
+                    $subquery
+                        ->whereHas('activo', fn ($activo) => $activo->where('num_inventario', 'like', "%{$v}%"))
+                        ->orWhere('ip_cliente', 'like', "%{$v}%");
+                });
             })
             ->latest('fecha')
             ->paginate(25)

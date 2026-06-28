@@ -50,6 +50,12 @@ class DepartamentoWebController extends Controller
 
     public function destroy(Departamento $departamento): RedirectResponse
     {
+        if ($departamento->activos()->exists() || $departamento->colaboradores()->exists()) {
+            return redirect()
+                ->route('catalogos.departamentos.index')
+                ->withErrors('No se puede eliminar el departamento porque tiene activos o colaboradores asociados.');
+        }
+
         $departamento->delete();
 
         return redirect()->route('catalogos.departamentos.index')->with('exito', 'Departamento eliminado.');

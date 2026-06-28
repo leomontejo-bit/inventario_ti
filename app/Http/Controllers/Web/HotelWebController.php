@@ -51,6 +51,12 @@ class HotelWebController extends Controller
 
     public function destroy(Hotel $hotel): RedirectResponse
     {
+        if ($hotel->activos()->exists() || $hotel->colaboradores()->exists()) {
+            return redirect()
+                ->route('catalogos.hoteles.index')
+                ->withErrors('No se puede eliminar el hotel porque tiene activos o colaboradores asociados.');
+        }
+
         $hotel->delete();
 
         return redirect()->route('catalogos.hoteles.index')->with('exito', 'Hotel eliminado.');

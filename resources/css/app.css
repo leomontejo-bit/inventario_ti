@@ -16,6 +16,55 @@
     --color-brand-700: #4338ca;
 }
 
+@layer base {
+    html,
+    body,
+    body * {
+        caret-color: transparent;
+        cursor: default;
+        user-select: none;
+    }
+
+    a,
+    a *,
+    button,
+    button *,
+    select,
+    select *,
+    summary,
+    summary *,
+    label[for],
+    label[for] *,
+    [role='button'],
+    [role='button'] *,
+    input[type='button'],
+    input[type='checkbox'],
+    input[type='file'],
+    input[type='radio'],
+    input[type='reset'],
+    input[type='submit'] {
+        cursor: pointer;
+    }
+
+    input:not([type='button']):not([type='checkbox']):not([type='file']):not([type='radio']):not([type='reset']):not([type='submit']),
+    input:not([type='button']):not([type='checkbox']):not([type='file']):not([type='radio']):not([type='reset']):not([type='submit']) *,
+    textarea,
+    textarea *,
+    [contenteditable='true'],
+    [contenteditable='true'] * {
+        caret-color: auto;
+        cursor: text;
+        user-select: text;
+    }
+
+    button:disabled,
+    input:disabled,
+    select:disabled,
+    textarea:disabled {
+        cursor: not-allowed;
+    }
+}
+
 /* ===== Design system: componentes reutilizables ===== */
 @layer components {
     .card {

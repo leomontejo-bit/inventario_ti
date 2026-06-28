@@ -83,7 +83,7 @@ class EscaneoWebController extends Controller
     private function usuarioActual(): int
     {
         return auth()->id() ?? UsuarioSistema::query()
-            ->orderByRaw("FIELD(rol, 'admin') DESC")
+            ->orderByRaw("CASE WHEN rol = 'admin' THEN 0 ELSE 1 END")
             ->value('id') ?? 1;
     }
 }

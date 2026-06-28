@@ -51,6 +51,12 @@ class TipoActivoWebController extends Controller
 
     public function destroy(TipoActivo $tipo): RedirectResponse
     {
+        if ($tipo->activos()->exists()) {
+            return redirect()
+                ->route('catalogos.tipos.index')
+                ->withErrors('No se puede eliminar el tipo porque tiene activos asociados.');
+        }
+
         $tipo->delete();
 
         return redirect()->route('catalogos.tipos.index')->with('exito', 'Tipo de activo eliminado.');
