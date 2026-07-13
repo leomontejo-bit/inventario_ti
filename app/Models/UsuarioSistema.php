@@ -2,8 +2,8 @@
 
 namespace App\Models;
 
-use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Foundation\Auth\User as Authenticatable;
 
 class UsuarioSistema extends Authenticatable
 {
@@ -14,6 +14,8 @@ class UsuarioSistema extends Authenticatable
     protected $fillable = [
         'nombre',
         'email',
+        'telefono',
+        'foto_perfil',
         'password_hash',
         'rol',
         'activo',

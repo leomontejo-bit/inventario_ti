@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Exceptions\EliminacionBloqueadaException;
 use App\Models\Activo;
 use App\Models\Asignacion;
 use Illuminate\Database\Eloquent\Builder;
@@ -12,8 +13,7 @@ class ActivoService
 {
     public function __construct(
         private readonly AuditoriaService $auditoria,
-    ) {
-    }
+    ) {}
 
     /**
      * Listado paginado con filtros opcionales.
@@ -84,6 +84,19 @@ class ActivoService
 
     public function eliminar(Activo $activo): void
     {
+        $dependencias = collect([
+            'contrato(s)' => $activo->contratos()->count(),
+            'licencia(s)' => $activo->licencias()->count(),
+            'asignación(es) en el historial' => $activo->asignaciones()->count(),
+        ])->filter()->map(fn (int $cantidad, string $nombre) => "{$cantidad} {$nombre}");
+
+        if ($dependencias->isNotEmpty()) {
+            throw new EliminacionBloqueadaException(
+                'tiene '.($dependencias->join(', ', ' y ')).' asociado(s).',
+                'conserva su historial y usa “Dar de baja”. Si el vínculo fue un error, corrígelo desde Contratos, Licencias o Asignaciones antes de intentar nuevamente.',
+            );
+        }
+
         DB::transaction(function () use ($activo) {
             $id = $activo->id;
             $anteriores = $activo->getAttributes();

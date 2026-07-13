@@ -3,7 +3,12 @@
 namespace Tests\Feature;
 
 use App\Models\Activo;
+use App\Models\Asignacion;
+use App\Models\Auditoria;
 use App\Models\Colaborador;
+use App\Models\Contrato;
+use App\Models\Etiqueta;
+use App\Models\Hotel;
 use App\Models\UsuarioSistema;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -98,8 +103,8 @@ class InventarioWebTest extends TestCase
         $this->assertEquals('baja', $activo->fresh()->estado);
 
         // Limpieza
-        \App\Models\Asignacion::where('activo_id', $activo->id)->delete();
-        \App\Models\Auditoria::where('activo_id', $activo->id)->delete();
+        Asignacion::where('activo_id', $activo->id)->delete();
+        Auditoria::where('activo_id', $activo->id)->delete();
         $activo->delete();
         $colab->delete();
     }
@@ -124,7 +129,7 @@ class InventarioWebTest extends TestCase
         ]);
 
         // Limpieza
-        \App\Models\Etiqueta::where('activo_id', $activo->id)->delete();
+        Etiqueta::where('activo_id', $activo->id)->delete();
         $activo->delete();
     }
 
@@ -138,7 +143,7 @@ class InventarioWebTest extends TestCase
         ])->assertRedirect(route('catalogos.hoteles.index'));
         $this->assertDatabaseHas('hoteles', ['codigo' => $codigo]);
 
-        $hotel = \App\Models\Hotel::where('codigo', $codigo)->first();
+        $hotel = Hotel::where('codigo', $codigo)->first();
 
         // Editar
         $this->put(route('catalogos.hoteles.update', $hotel), [
@@ -177,7 +182,7 @@ class InventarioWebTest extends TestCase
             ->assertSee('No se encontró');
 
         // Limpieza
-        \App\Models\Auditoria::where('activo_id', $activo->id)->delete();
+        Auditoria::where('activo_id', $activo->id)->delete();
         $activo->delete();
     }
 
@@ -200,5 +205,80 @@ class InventarioWebTest extends TestCase
 
         // Limpieza
         Activo::where('num_inventario', $numInv)->delete();
+    }
+
+    public function test_no_elimina_activo_con_contrato_y_muestra_motivo_y_alternativa(): void
+    {
+        $activo = Activo::create([
+            'tipo_activo_id' => 1, 'hotel_id' => 1, 'departamento_id' => 1,
+            'num_inventario' => 'BLOQUEO-'.uniqid(), 'estado' => 'stock',
+        ]);
+        Contrato::create([
+            'activo_id' => $activo->id,
+            'tipo' => 'mantenimiento',
+            'proveedor' => 'Proveedor de prueba',
+            'fecha_inicio' => date('Y-m-d'),
+        ]);
+
+        $response = $this->delete(route('activos.destroy', $activo))
+            ->assertRedirect()
+            ->assertSessionHasErrors();
+
+        $mensaje = $response->getSession()->get('errors')->getBag('default')->first();
+        $this->assertStringContainsString('1 contrato(s)', $mensaje);
+        $this->assertStringContainsString('Dar de baja', $mensaje);
+
+        $this->assertDatabaseHas('activos', ['id' => $activo->id]);
+    }
+
+    public function test_api_responde_409_al_eliminar_activo_con_historial(): void
+    {
+        $colaborador = Colaborador::create([
+            'hotel_id' => 1, 'departamento_id' => 1,
+            'nombre' => 'Historial API', 'num_empleado' => 'API-'.uniqid(),
+        ]);
+        $activo = Activo::create([
+            'tipo_activo_id' => 1, 'hotel_id' => 1, 'departamento_id' => 1,
+            'num_inventario' => 'API-BLOQUEO-'.uniqid(), 'estado' => 'stock',
+        ]);
+        Asignacion::create([
+            'activo_id' => $activo->id,
+            'colaborador_id' => $colaborador->id,
+            'fecha_asignacion' => date('Y-m-d'),
+        ]);
+
+        $this->deleteJson(route('api.inventario.activos.destroy', $activo))
+            ->assertStatus(409)
+            ->assertJsonPath('error', 'eliminacion_bloqueada')
+            ->assertJsonPath('alternativa', fn (string $texto) => str_contains($texto, 'Dar de baja'));
+
+        $this->assertDatabaseHas('activos', ['id' => $activo->id]);
+    }
+
+    public function test_api_explica_por_que_no_elimina_catalogo_en_uso(): void
+    {
+        $this->deleteJson(route('api.inventario.hoteles.destroy', 1))
+            ->assertStatus(409)
+            ->assertJsonPath('error', 'eliminacion_bloqueada')
+            ->assertJsonStructure(['message', 'alternativa']);
+
+        $this->assertDatabaseHas('hoteles', ['id' => 1]);
+    }
+
+    public function test_usuario_actualiza_su_perfil(): void
+    {
+        $usuario = auth()->user();
+
+        $this->put(route('perfil.update'), [
+            'nombre' => 'Administrador Actualizado',
+            'email' => $usuario->email,
+            'telefono' => '+52 998 123 4567',
+        ])->assertRedirect()->assertSessionHas('exito');
+
+        $this->assertDatabaseHas('usuarios_sistema', [
+            'id' => $usuario->id,
+            'nombre' => 'Administrador Actualizado',
+            'telefono' => '+52 998 123 4567',
+        ]);
     }
 }

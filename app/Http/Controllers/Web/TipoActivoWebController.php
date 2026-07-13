@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Web;
 
 use App\Http\Controllers\Controller;
 use App\Models\TipoActivo;
+use App\Services\EliminacionCatalogoService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -27,7 +28,7 @@ class TipoActivoWebController extends Controller
 
     public function create(): View
     {
-        return view('catalogos.tipos.form', ['tipo' => new TipoActivo()]);
+        return view('catalogos.tipos.form', ['tipo' => new TipoActivo]);
     }
 
     public function store(Request $request): RedirectResponse
@@ -49,15 +50,9 @@ class TipoActivoWebController extends Controller
         return redirect()->route('catalogos.tipos.index')->with('exito', 'Tipo de activo actualizado.');
     }
 
-    public function destroy(TipoActivo $tipo): RedirectResponse
+    public function destroy(TipoActivo $tipo, EliminacionCatalogoService $eliminacion): RedirectResponse
     {
-        if ($tipo->activos()->exists()) {
-            return redirect()
-                ->route('catalogos.tipos.index')
-                ->withErrors('No se puede eliminar el tipo porque tiene activos asociados.');
-        }
-
-        $tipo->delete();
+        $eliminacion->tipoActivo($tipo);
 
         return redirect()->route('catalogos.tipos.index')->with('exito', 'Tipo de activo eliminado.');
     }

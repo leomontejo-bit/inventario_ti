@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Web;
 
 use App\Http\Controllers\Controller;
 use App\Models\Hotel;
+use App\Services\EliminacionCatalogoService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -27,7 +28,7 @@ class HotelWebController extends Controller
 
     public function create(): View
     {
-        return view('catalogos.hoteles.form', ['hotel' => new Hotel()]);
+        return view('catalogos.hoteles.form', ['hotel' => new Hotel]);
     }
 
     public function store(Request $request): RedirectResponse
@@ -49,15 +50,9 @@ class HotelWebController extends Controller
         return redirect()->route('catalogos.hoteles.index')->with('exito', 'Hotel actualizado.');
     }
 
-    public function destroy(Hotel $hotel): RedirectResponse
+    public function destroy(Hotel $hotel, EliminacionCatalogoService $eliminacion): RedirectResponse
     {
-        if ($hotel->activos()->exists() || $hotel->colaboradores()->exists()) {
-            return redirect()
-                ->route('catalogos.hoteles.index')
-                ->withErrors('No se puede eliminar el hotel porque tiene activos o colaboradores asociados.');
-        }
-
-        $hotel->delete();
+        $eliminacion->hotel($hotel);
 
         return redirect()->route('catalogos.hoteles.index')->with('exito', 'Hotel eliminado.');
     }

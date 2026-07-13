@@ -3,9 +3,8 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>@yield('titulo', 'Inventario TI') — Bahia Principe</title>
+    <title>@yield('titulo', $configuracionSistema['nombre']) — {{ $configuracionSistema['subtitulo'] }}</title>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
-    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
 </head>
 <body class="h-full bg-gray-50 text-gray-800 antialiased">
 @php
@@ -22,6 +21,7 @@
 
     if (auth()->user()?->rol === 'admin') {
         $nav[] = ['usuarios.index', 'Usuarios', 'M17 20h5v-2a4 4 0 00-3-3.87M9 20H4v-2a4 4 0 013-3.87m6-1.13a4 4 0 10-4-4 4 4 0 004 4zm8-6a3 3 0 10-6 0 3 3 0 006 0z'];
+        $nav[] = ['configuracion.edit', 'Configuración', 'M12 15.5A3.5 3.5 0 1012 8a3.5 3.5 0 000 7.5zM19 12a7 7 0 01-.1 1.2l2 1.5-2 3.5-2.4-1a7 7 0 01-2 1.2L14.2 21h-4.4l-.3-2.6a7 7 0 01-2-1.2l-2.4 1-2-3.5 2-1.5A7 7 0 015 12a7 7 0 01.1-1.2l-2-1.5 2-3.5 2.4 1a7 7 0 012-1.2L9.8 3h4.4l.3 2.6a7 7 0 012 1.2l2.4-1 2 3.5-2 1.5A7 7 0 0119 12z'];
     }
 @endphp
 
@@ -30,14 +30,18 @@
     <aside class="group fixed inset-y-0 left-0 z-40 w-64 -translate-x-full overflow-hidden bg-slate-900 shadow-xl transition-all duration-300 ease-in-out lg:w-20 lg:translate-x-0 lg:hover:w-64"
            :class="open && 'translate-x-0'">
         <div class="flex h-16 items-center gap-2.5 px-4">
-            <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-brand-500 to-indigo-700 text-white shadow-lg">
+            <div class="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-gradient-to-br from-brand-500 to-indigo-700 text-white shadow-lg">
+                @if ($configuracionSistema['logo'])
+                    <img src="{{ route('configuracion.logo', ['v' => md5($configuracionSistema['logo'])]) }}" alt="Logo" class="h-full w-full bg-white object-contain p-1">
+                @else
                 <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10"/>
                 </svg>
+                @endif
             </div>
             <div class="leading-tight whitespace-nowrap transition-opacity duration-200 lg:opacity-0 lg:group-hover:opacity-100">
-                <div class="text-sm font-bold text-white">Inventario TI</div>
-                <div class="text-[11px] text-slate-400">Bahia Principe</div>
+                <div class="text-sm font-bold text-white">{{ $configuracionSistema['nombre'] }}</div>
+                <div class="text-[11px] text-slate-400">{{ $configuracionSistema['subtitulo'] }}</div>
             </div>
         </div>
 
@@ -57,12 +61,20 @@
             $usuario = auth()->user();
             $iniciales = $usuario ? Str::of($usuario->nombre)->explode(' ')->take(2)->map(fn ($p) => Str::substr($p, 0, 1))->implode('') : 'TI';
         @endphp
-        <div class="absolute inset-x-3 bottom-4 flex items-center gap-3 rounded-xl bg-white/5 p-2.5 ring-1 ring-white/10">
-            <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-brand-600 text-sm font-semibold text-white">{{ $iniciales }}</div>
+        <div class="absolute inset-x-3 bottom-4 flex items-center gap-2 rounded-xl bg-white/5 p-2.5 ring-1 ring-white/10">
+            <a href="{{ route('perfil.edit') }}" title="Editar mi perfil" class="flex min-w-0 flex-1 items-center gap-3 rounded-lg hover:bg-white/5">
+            <div class="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full bg-brand-600 text-sm font-semibold text-white">
+                @if ($usuario?->foto_perfil)
+                    <img src="{{ route('perfil.foto', ['v' => md5($usuario->foto_perfil)]) }}" alt="" class="h-full w-full object-cover">
+                @else
+                    {{ $iniciales }}
+                @endif
+            </div>
             <div class="min-w-0 flex-1 leading-tight whitespace-nowrap transition-opacity duration-200 lg:opacity-0 lg:group-hover:opacity-100">
                 <div class="truncate text-xs font-medium text-white">{{ $usuario?->nombre ?? 'Invitado' }}</div>
-                <div class="text-[11px] capitalize text-slate-400">{{ $usuario?->rol ?? '' }}</div>
+                <div class="text-[11px] capitalize text-slate-400">{{ $usuario?->rol ?? '' }} · Editar perfil</div>
             </div>
+            </a>
             <form method="POST" action="{{ route('logout') }}" class="whitespace-nowrap transition-opacity duration-200 lg:opacity-0 lg:group-hover:opacity-100">
                 @csrf
                 <button type="submit" title="Cerrar sesión" class="flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 hover:bg-white/10 hover:text-white">
@@ -113,6 +125,9 @@
     </div>
 </div>
 
+<div id="cargando-navegacion" class="pointer-events-none fixed inset-x-0 top-0 z-50 hidden h-0.5 overflow-hidden bg-brand-100">
+    <div class="h-full w-1/3 animate-pulse bg-brand-600"></div>
+</div>
 <style>[x-cloak]{display:none!important}</style>
 </body>
 </html>

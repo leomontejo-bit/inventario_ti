@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Inventario;
 
 use App\Http\Controllers\Controller;
 use App\Models\Hotel;
+use App\Services\EliminacionCatalogoService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -46,9 +47,9 @@ class HotelController extends Controller
         return response()->json($hotel);
     }
 
-    public function destroy(Hotel $hotel): JsonResponse
+    public function destroy(Hotel $hotel, EliminacionCatalogoService $eliminacion): JsonResponse
     {
-        $hotel->delete();
+        $eliminacion->hotel($hotel);
 
         return response()->json(null, 204);
     }

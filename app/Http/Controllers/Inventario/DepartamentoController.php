@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Inventario;
 
 use App\Http\Controllers\Controller;
 use App\Models\Departamento;
+use App\Services\EliminacionCatalogoService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -41,9 +42,9 @@ class DepartamentoController extends Controller
         return response()->json($departamento);
     }
 
-    public function destroy(Departamento $departamento): JsonResponse
+    public function destroy(Departamento $departamento, EliminacionCatalogoService $eliminacion): JsonResponse
     {
-        $departamento->delete();
+        $eliminacion->departamento($departamento);
 
         return response()->json(null, 204);
     }

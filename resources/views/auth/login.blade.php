@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Iniciar sesión — Inventario TI</title>
+    <title>Iniciar sesión — {{ $configuracionSistema['nombre'] }}</title>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
 <body class="h-full bg-slate-900 antialiased">
@@ -11,13 +11,17 @@
     <div class="mx-auto w-full max-w-md">
         {{-- Logo --}}
         <div class="mb-8 flex flex-col items-center">
-            <div class="flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-brand-500 to-indigo-700 text-white shadow-lg">
+            <div class="flex h-14 w-14 items-center justify-center overflow-hidden rounded-2xl bg-gradient-to-br from-brand-500 to-indigo-700 text-white shadow-lg">
+                @if ($configuracionSistema['logo'])
+                    <img src="{{ route('configuracion.logo', ['v' => md5($configuracionSistema['logo'])]) }}" alt="Logo" class="h-full w-full bg-white object-contain p-1.5">
+                @else
                 <svg class="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10"/>
                 </svg>
+                @endif
             </div>
-            <h1 class="mt-4 text-xl font-bold text-white">Inventario TI</h1>
-            <p class="text-sm text-slate-400">Bahia Principe Hotels &amp; Resorts</p>
+            <h1 class="mt-4 text-xl font-bold text-white">{{ $configuracionSistema['nombre'] }}</h1>
+            <p class="text-sm text-slate-400">{{ $configuracionSistema['subtitulo'] }}</p>
         </div>
 
         <div class="rounded-2xl bg-white p-8 shadow-xl">

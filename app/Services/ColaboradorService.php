@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Exceptions\EliminacionBloqueadaException;
 use App\Models\Colaborador;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Pagination\LengthAwarePaginator;
@@ -49,6 +50,16 @@ class ColaboradorService
 
     public function eliminar(Colaborador $colaborador): void
     {
+        $activos = $colaborador->activos()->count();
+        $asignaciones = $colaborador->asignaciones()->count();
+
+        if ($activos || $asignaciones) {
+            throw new EliminacionBloqueadaException(
+                "tiene {$activos} activo(s) asignado(s) y {$asignaciones} asignación(es) en su historial.",
+                'devuelve o reasigna sus activos y cambia su estado a “inactivo” para conservar la trazabilidad.',
+            );
+        }
+
         $colaborador->delete();
     }
 }

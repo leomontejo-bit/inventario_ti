@@ -49,7 +49,7 @@
     <div class="card p-6">
         <h3 class="mb-5 font-semibold text-gray-900">Activos por estado</h3>
         @php
-            $maxEstado = $porEstado->max() ?: 1;
+            $maxEstado = max($porEstado ?: [1]);
             $colorBar = [
                 'stock' => 'bg-emerald-500', 'activo' => 'bg-blue-500', 'mantenimiento' => 'bg-amber-500',
                 'prestamo' => 'bg-violet-500', 'extraviado' => 'bg-red-500', 'baja' => 'bg-gray-400',

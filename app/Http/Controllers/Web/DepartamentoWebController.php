@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Web;
 
 use App\Http\Controllers\Controller;
 use App\Models\Departamento;
+use App\Services\EliminacionCatalogoService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -26,7 +27,7 @@ class DepartamentoWebController extends Controller
 
     public function create(): View
     {
-        return view('catalogos.departamentos.form', ['departamento' => new Departamento()]);
+        return view('catalogos.departamentos.form', ['departamento' => new Departamento]);
     }
 
     public function store(Request $request): RedirectResponse
@@ -48,15 +49,9 @@ class DepartamentoWebController extends Controller
         return redirect()->route('catalogos.departamentos.index')->with('exito', 'Departamento actualizado.');
     }
 
-    public function destroy(Departamento $departamento): RedirectResponse
+    public function destroy(Departamento $departamento, EliminacionCatalogoService $eliminacion): RedirectResponse
     {
-        if ($departamento->activos()->exists() || $departamento->colaboradores()->exists()) {
-            return redirect()
-                ->route('catalogos.departamentos.index')
-                ->withErrors('No se puede eliminar el departamento porque tiene activos o colaboradores asociados.');
-        }
-
-        $departamento->delete();
+        $eliminacion->departamento($departamento);
 
         return redirect()->route('catalogos.departamentos.index')->with('exito', 'Departamento eliminado.');
     }

@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Inventario;
 
 use App\Http\Controllers\Controller;
 use App\Models\TipoActivo;
+use App\Services\EliminacionCatalogoService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -46,9 +47,9 @@ class TipoActivoController extends Controller
         return response()->json($tipoActivo);
     }
 
-    public function destroy(TipoActivo $tipoActivo): JsonResponse
+    public function destroy(TipoActivo $tipoActivo, EliminacionCatalogoService $eliminacion): JsonResponse
     {
-        $tipoActivo->delete();
+        $eliminacion->tipoActivo($tipoActivo);
 
         return response()->json(null, 204);
     }
