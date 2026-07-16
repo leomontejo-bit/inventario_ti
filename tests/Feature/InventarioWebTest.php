@@ -255,6 +255,41 @@ class InventarioWebTest extends TestCase
         $this->assertDatabaseHas('activos', ['id' => $activo->id]);
     }
 
+    public function test_elimina_activo_dado_de_baja_aunque_tenga_historial(): void
+    {
+        $colaborador = Colaborador::create([
+            'hotel_id' => 1, 'departamento_id' => 1,
+            'nombre' => 'Historial Baja', 'num_empleado' => 'BAJA-'.uniqid(),
+        ]);
+        $activo = Activo::create([
+            'tipo_activo_id' => 1, 'hotel_id' => 1, 'departamento_id' => 1,
+            'num_inventario' => 'BAJA-ELIMINAR-'.uniqid(), 'estado' => 'stock',
+        ]);
+        $asignacion = Asignacion::create([
+            'activo_id' => $activo->id,
+            'colaborador_id' => $colaborador->id,
+            'fecha_asignacion' => date('Y-m-d'),
+        ]);
+        $etiqueta = Etiqueta::create([
+            'activo_id' => $activo->id,
+            'usuario_sistema_id' => auth()->id(),
+            'tipo_impresion' => 'codigo_barras',
+        ]);
+
+        $this->post(route('activos.baja', $activo), [
+            'fecha_baja' => date('Y-m-d'),
+            'motivo_baja' => 'Fin de vida útil',
+        ])->assertRedirect();
+
+        $this->delete(route('activos.destroy', $activo))
+            ->assertRedirect(route('activos.index'))
+            ->assertSessionHas('exito', 'Activo eliminado.');
+
+        $this->assertDatabaseMissing('activos', ['id' => $activo->id]);
+        $this->assertDatabaseMissing('asignaciones', ['id' => $asignacion->id]);
+        $this->assertDatabaseMissing('etiquetas', ['id' => $etiqueta->id]);
+    }
+
     public function test_api_explica_por_que_no_elimina_catalogo_en_uso(): void
     {
         $this->deleteJson(route('api.inventario.hoteles.destroy', 1))

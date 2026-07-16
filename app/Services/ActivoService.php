@@ -84,22 +84,33 @@ class ActivoService
 
     public function eliminar(Activo $activo): void
     {
-        $dependencias = collect([
-            'contrato(s)' => $activo->contratos()->count(),
-            'licencia(s)' => $activo->licencias()->count(),
-            'asignación(es) en el historial' => $activo->asignaciones()->count(),
-        ])->filter()->map(fn (int $cantidad, string $nombre) => "{$cantidad} {$nombre}");
+        if ($activo->estado !== 'baja') {
+            $dependencias = collect([
+                'contrato(s)' => $activo->contratos()->count(),
+                'licencia(s)' => $activo->licencias()->count(),
+                'asignación(es) en el historial' => $activo->asignaciones()->count(),
+                'etiqueta(s) generada(s)' => $activo->etiquetas()->count(),
+            ])->filter()->map(fn (int $cantidad, string $nombre) => "{$cantidad} {$nombre}");
 
-        if ($dependencias->isNotEmpty()) {
-            throw new EliminacionBloqueadaException(
-                'tiene '.($dependencias->join(', ', ' y ')).' asociado(s).',
-                'conserva su historial y usa “Dar de baja”. Si el vínculo fue un error, corrígelo desde Contratos, Licencias o Asignaciones antes de intentar nuevamente.',
-            );
+            if ($dependencias->isNotEmpty()) {
+                throw new EliminacionBloqueadaException(
+                    'tiene '.($dependencias->join(', ', ' y ')).' asociado(s).',
+                    'conserva su historial y usa “Dar de baja”. Una vez dado de baja podrás eliminarlo definitivamente.',
+                );
+            }
         }
 
         DB::transaction(function () use ($activo) {
             $id = $activo->id;
             $anteriores = $activo->getAttributes();
+
+            if ($activo->estado === 'baja') {
+                $activo->asignaciones()->delete();
+                $activo->contratos()->delete();
+                $activo->etiquetas()->delete();
+                $activo->licencias()->update(['activo_id' => null]);
+            }
+
             $activo->delete();
 
             $this->auditoria->registrar(
