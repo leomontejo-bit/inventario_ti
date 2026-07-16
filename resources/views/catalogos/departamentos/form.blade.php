@@ -19,6 +19,13 @@
             <label class="label">Nombre *</label>
             <input type="text" name="nombre" value="{{ old('nombre', $departamento->nombre) }}" required class="input">
         </div>
+        <div class="mt-4">
+            <input type="hidden" name="activo" value="0">
+            <label class="flex items-center gap-2 text-sm font-medium text-gray-700">
+                <input type="checkbox" name="activo" value="1" @checked(old('activo', $editando ? $departamento->activo : true)) class="rounded border-gray-300 text-brand-600 focus:ring-brand-500">
+                Departamento activo
+            </label>
+        </div>
     </div>
 
     <div class="flex max-w-2xl justify-end gap-3">

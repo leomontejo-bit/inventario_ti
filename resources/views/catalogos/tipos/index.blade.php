@@ -35,6 +35,7 @@
                     <th class="th">Categoría</th>
                     <th class="th">Prefijo</th>
                     <th class="th">Equipos</th>
+                    <th class="th">Estado</th>
                     <th class="th text-right">Acciones</th>
                 </tr>
             </thead>
@@ -45,6 +46,7 @@
                         <td class="td capitalize">{{ str_replace('_', ' ', $t->categoria) }}</td>
                         <td class="td">@if ($t->prefijo_codigo)<span class="badge bg-amber-50 font-semibold text-amber-700">{{ $t->prefijo_codigo }}</span>@else<span class="text-gray-300">—</span>@endif</td>
                         <td class="td">{{ $t->activos_count }}</td>
+                        <td class="td"><span class="badge {{ $t->activo ? 'bg-emerald-50 text-emerald-700' : 'bg-gray-100 text-gray-600' }}">{{ $t->activo ? 'Activo' : 'Inactivo' }}</span></td>
                         <td class="td">
                             <div class="flex items-center justify-end gap-1">
                                 <a href="{{ route('catalogos.tipos.edit', $t) }}" class="rounded-lg px-2.5 py-1.5 text-xs font-medium text-brand-600 hover:bg-brand-50">Editar</a>
@@ -56,7 +58,7 @@
                         </td>
                     </tr>
                 @empty
-                    <tr><td colspan="5" class="td py-12 text-center text-gray-400">No hay tipos.</td></tr>
+                    <tr><td colspan="6" class="td py-12 text-center text-gray-400">No hay tipos.</td></tr>
                 @endforelse
             </tbody>
         </table>

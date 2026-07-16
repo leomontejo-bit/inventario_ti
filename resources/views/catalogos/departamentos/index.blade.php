@@ -34,6 +34,7 @@
                     <th class="th">Nombre</th>
                     <th class="th">Colaboradores</th>
                     <th class="th">Equipos</th>
+                    <th class="th">Estado</th>
                     <th class="th text-right">Acciones</th>
                 </tr>
             </thead>
@@ -43,6 +44,7 @@
                         <td class="td font-semibold text-gray-900">{{ $d->nombre }}</td>
                         <td class="td">{{ $d->colaboradores_count }}</td>
                         <td class="td">{{ $d->activos_count }}</td>
+                        <td class="td"><span class="badge {{ $d->activo ? 'bg-emerald-50 text-emerald-700' : 'bg-gray-100 text-gray-600' }}">{{ $d->activo ? 'Activo' : 'Inactivo' }}</span></td>
                         <td class="td">
                             <div class="flex items-center justify-end gap-1">
                                 <a href="{{ route('catalogos.departamentos.edit', $d) }}" class="rounded-lg px-2.5 py-1.5 text-xs font-medium text-brand-600 hover:bg-brand-50">Editar</a>
@@ -54,7 +56,7 @@
                         </td>
                     </tr>
                 @empty
-                    <tr><td colspan="4" class="td py-12 text-center text-gray-400">No hay departamentos.</td></tr>
+                    <tr><td colspan="5" class="td py-12 text-center text-gray-400">No hay departamentos.</td></tr>
                 @endforelse
             </tbody>
         </table>

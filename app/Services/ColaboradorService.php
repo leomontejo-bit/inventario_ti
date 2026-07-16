@@ -6,6 +6,7 @@ use App\Exceptions\EliminacionBloqueadaException;
 use App\Models\Colaborador;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Facades\DB;
 
 class ColaboradorService
 {
@@ -53,13 +54,25 @@ class ColaboradorService
         $activos = $colaborador->activos()->count();
         $asignaciones = $colaborador->asignaciones()->count();
 
-        if ($activos || $asignaciones) {
+        if ($colaborador->estado !== 'baja' && ($activos || $asignaciones)) {
             throw new EliminacionBloqueadaException(
                 "tiene {$activos} activo(s) asignado(s) y {$asignaciones} asignación(es) en su historial.",
-                'devuelve o reasigna sus activos y cambia su estado a “inactivo” para conservar la trazabilidad.',
+                'devuelve o reasigna sus activos y cambia su estado a “baja”. Una vez dado de baja podrás eliminarlo definitivamente.',
             );
         }
 
-        $colaborador->delete();
+        DB::transaction(function () use ($colaborador): void {
+            if ($colaborador->estado === 'baja') {
+                $colaborador->activos()
+                    ->where('estado', '!=', 'baja')
+                    ->update(['colaborador_id' => null, 'estado' => 'stock']);
+                $colaborador->activos()
+                    ->where('estado', 'baja')
+                    ->update(['colaborador_id' => null]);
+                $colaborador->asignaciones()->delete();
+            }
+
+            $colaborador->delete();
+        });
     }
 }

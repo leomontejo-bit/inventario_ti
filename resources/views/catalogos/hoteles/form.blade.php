@@ -28,6 +28,13 @@
                 <label class="label">Dirección</label>
                 <input type="text" name="direccion" value="{{ old('direccion', $hotel->direccion) }}" class="input">
             </div>
+            <div class="sm:col-span-2">
+                <input type="hidden" name="activo" value="0">
+                <label class="flex items-center gap-2 text-sm font-medium text-gray-700">
+                    <input type="checkbox" name="activo" value="1" @checked(old('activo', $editando ? $hotel->activo : true)) class="rounded border-gray-300 text-brand-600 focus:ring-brand-500">
+                    Hotel activo
+                </label>
+            </div>
         </div>
     </div>
 

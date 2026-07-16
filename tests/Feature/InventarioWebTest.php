@@ -67,6 +67,62 @@ class InventarioWebTest extends TestCase
         Colaborador::where('num_empleado', 'WEB-TEST-001')->delete();
     }
 
+    public function test_no_elimina_colaborador_activo_con_historial(): void
+    {
+        $colaborador = Colaborador::create([
+            'hotel_id' => 1, 'departamento_id' => 1,
+            'nombre' => 'Colaborador Activo', 'num_empleado' => 'COL-ACT-'.uniqid(),
+            'estado' => 'activo',
+        ]);
+        $activo = Activo::create([
+            'tipo_activo_id' => 1, 'hotel_id' => 1, 'departamento_id' => 1,
+            'colaborador_id' => $colaborador->id,
+            'num_inventario' => 'COL-ACTIVO-'.uniqid(), 'estado' => 'activo',
+        ]);
+        Asignacion::create([
+            'activo_id' => $activo->id,
+            'colaborador_id' => $colaborador->id,
+            'fecha_asignacion' => date('Y-m-d'),
+        ]);
+
+        $this->delete(route('colaboradores.destroy', $colaborador))
+            ->assertRedirect()
+            ->assertSessionHasErrors();
+
+        $this->assertDatabaseHas('colaboradores', ['id' => $colaborador->id]);
+    }
+
+    public function test_elimina_colaborador_dado_de_baja_y_libera_sus_activos(): void
+    {
+        $colaborador = Colaborador::create([
+            'hotel_id' => 1, 'departamento_id' => 1,
+            'nombre' => 'Colaborador Baja', 'num_empleado' => 'COL-BAJA-'.uniqid(),
+            'estado' => 'baja',
+        ]);
+        $activo = Activo::create([
+            'tipo_activo_id' => 1, 'hotel_id' => 1, 'departamento_id' => 1,
+            'colaborador_id' => $colaborador->id,
+            'num_inventario' => 'COL-LIBERAR-'.uniqid(), 'estado' => 'activo',
+        ]);
+        $asignacion = Asignacion::create([
+            'activo_id' => $activo->id,
+            'colaborador_id' => $colaborador->id,
+            'fecha_asignacion' => date('Y-m-d'),
+        ]);
+
+        $this->delete(route('colaboradores.destroy', $colaborador))
+            ->assertRedirect(route('colaboradores.index'))
+            ->assertSessionHas('exito', 'Colaborador eliminado.');
+
+        $this->assertDatabaseMissing('colaboradores', ['id' => $colaborador->id]);
+        $this->assertDatabaseMissing('asignaciones', ['id' => $asignacion->id]);
+        $this->assertDatabaseHas('activos', [
+            'id' => $activo->id,
+            'colaborador_id' => null,
+            'estado' => 'stock',
+        ]);
+    }
+
     public function test_flujo_asignar_devolver_baja(): void
     {
         $colab = Colaborador::create([
@@ -147,9 +203,10 @@ class InventarioWebTest extends TestCase
 
         // Editar
         $this->put(route('catalogos.hoteles.update', $hotel), [
-            'nombre' => 'Hotel Editado', 'codigo' => $codigo,
+            'nombre' => 'Hotel Editado', 'codigo' => $codigo, 'activo' => false,
         ])->assertRedirect(route('catalogos.hoteles.index'));
         $this->assertEquals('Hotel Editado', $hotel->fresh()->nombre);
+        $this->assertFalse($hotel->fresh()->activo);
 
         // Eliminar
         $this->delete(route('catalogos.hoteles.destroy', $hotel))->assertRedirect();
